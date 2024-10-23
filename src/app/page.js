@@ -16,8 +16,8 @@ async function getItems() {
 
     // Fetch items
     const [rawMovies, rawSeries] = await Promise.all([
-      db.collection("movies").find({}).sort({ addedAt: -1 }).toArray(),
-      db.collection("series").find({}).sort({ addedAt: -1 }).toArray(),
+      db.collection("movies").find({}).sort({ pubDate: -1 }).toArray(),
+      db.collection("series").find({}).sort({ pubDate: -1 }).toArray(),
     ]);
 
     // Serialize the documents

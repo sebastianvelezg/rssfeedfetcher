@@ -13,7 +13,7 @@ export async function GET() {
     const rawSeries = await db
       .collection("series")
       .find({})
-      .sort({ addedAt: -1 })
+      .sort({ pubDate: -1 })
       .toArray();
 
     const series = serializeMongoDocArray(rawSeries);

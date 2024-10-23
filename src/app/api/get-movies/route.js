@@ -13,7 +13,7 @@ export async function GET() {
     const rawMovies = await db
       .collection("movies")
       .find({})
-      .sort({ addedAt: -1 })
+      .sort({ pubDate: -1 })
       .toArray();
 
     const movies = serializeMongoDocArray(rawMovies);
