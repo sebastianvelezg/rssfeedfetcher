@@ -1,7 +1,7 @@
 // src/app/api/get-movies/route.js
 import { NextResponse } from "next/server";
 import clientPromise from "@/lib/mongodb";
-import { serializeMongoDocArray } from "@/lib/utils/mongoSerializer";
+import { serializeMongoDocArray } from "@/utils/mongoSerializer";
 
 export async function GET() {
   try {
