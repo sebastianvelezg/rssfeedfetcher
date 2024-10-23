@@ -1,34 +1,54 @@
 // src/app/page.js
 import Link from "next/link";
-import MovieList from "@/components/movieList";
-import { Settings } from "lucide-react";
+import { Settings, AlertTriangle, Activity } from "lucide-react";
 import RefreshButton from "@/components/refreshButton";
 import PaginatedMovieList from "@/components/PaginatedMovieList";
 
 async function getItems() {
-  const protocol = process.env.NODE_ENV === "development" ? "http" : "https";
-  const host = process.env.VERCEL_URL || "localhost:3000";
-  const baseUrl = `${protocol}://${host}`;
+  try {
+    // First try to use VERCEL_URL
+    const baseUrl = process.env.VERCEL_URL
+      ? `https://${process.env.VERCEL_URL}`
+      : process.env.NODE_ENV === "development"
+      ? "http://localhost:3000"
+      : "";
 
-  const moviesRes = await fetch(`${baseUrl}/api/get-movies`, {
-    cache: "no-store",
-  });
-  const seriesRes = await fetch(`${baseUrl}/api/get-series`, {
-    cache: "no-store",
-  });
+    console.log("Fetching from base URL:", baseUrl); // Debug log
 
-  if (!moviesRes.ok || !seriesRes.ok) {
-    throw new Error("Failed to fetch items");
+    const [moviesRes, seriesRes] = await Promise.all([
+      fetch(`${baseUrl}/api/get-movies`, {
+        cache: "no-store",
+        next: { revalidate: 0 },
+      }),
+      fetch(`${baseUrl}/api/get-series`, {
+        cache: "no-store",
+        next: { revalidate: 0 },
+      }),
+    ]);
+
+    if (!moviesRes.ok) {
+      throw new Error(`Movies fetch failed: ${moviesRes.status}`);
+    }
+    if (!seriesRes.ok) {
+      throw new Error(`Series fetch failed: ${seriesRes.status}`);
+    }
+
+    const movies = await moviesRes.json();
+    const series = await seriesRes.json();
+
+    return { movies, series, error: null };
+  } catch (error) {
+    console.error("Error fetching items:", error);
+    return {
+      movies: [],
+      series: [],
+      error: error.message || "Failed to fetch items",
+    };
   }
-
-  const movies = await moviesRes.json();
-  const series = await seriesRes.json();
-
-  return { movies, series };
 }
 
 export default async function Home() {
-  const { movies, series } = await getItems();
+  const { movies, series, error } = await getItems();
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#171717] to-[#1a1a1a]">
