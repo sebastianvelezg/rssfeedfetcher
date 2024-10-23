@@ -6,57 +6,31 @@ import PaginatedMovieList from "@/components/PaginatedMovieList";
 
 async function getItems() {
   try {
-    // Debug logs for Vercel environment
-    console.log("Environment:", process.env.NODE_ENV);
-    console.log("Vercel URL:", process.env.VERCEL_URL);
+    const moviesRes = await fetch("/api/get-movies", {
+      cache: "no-store",
+    });
+    const seriesRes = await fetch("/api/get-series", {
+      cache: "no-store",
+    });
 
-    // Get the absolute URL
-    const baseUrl = process.env.VERCEL_URL
-      ? `https://${process.env.VERCEL_URL}`
-      : process.env.NODE_ENV === "development"
-      ? "http://localhost:3000"
-      : "";
-
-    console.log("Using base URL:", baseUrl);
-
-    const [moviesRes, seriesRes] = await Promise.all([
-      fetch(`${baseUrl}/api/get-movies`, {
-        cache: "no-store",
-        headers: {
-          "Cache-Control": "no-cache",
-        },
-      }),
-      fetch(`${baseUrl}/api/get-series`, {
-        cache: "no-store",
-        headers: {
-          "Cache-Control": "no-cache",
-        },
-      }),
-    ]);
-
-    if (!moviesRes.ok) {
-      console.error("Movies response not ok:", await moviesRes.text());
-      throw new Error(`Movies fetch failed: ${moviesRes.status}`);
-    }
-    if (!seriesRes.ok) {
-      console.error("Series response not ok:", await seriesRes.text());
-      throw new Error(`Series fetch failed: ${seriesRes.status}`);
+    if (!moviesRes.ok || !seriesRes.ok) {
+      console.error("Movies status:", moviesRes.status);
+      console.error("Series status:", seriesRes.status);
+      return { movies: [], series: [] };
     }
 
     const movies = await moviesRes.json();
     const series = await seriesRes.json();
 
-    console.log(`Fetched ${movies.length} movies and ${series.length} series`);
-
     return { movies, series };
   } catch (error) {
-    console.error("Error in getItems:", error);
-    throw error;
+    console.error("Error fetching items:", error);
+    return { movies: [], series: [] };
   }
 }
 
 export default async function Home() {
-  const { movies, series, error } = await getItems();
+  const { movies, series } = await getItems();
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#171717] to-[#1a1a1a]">

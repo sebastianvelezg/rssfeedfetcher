@@ -1,13 +1,14 @@
+// src/app/api/get-movies/route.js
 import { NextResponse } from "next/server";
 import clientPromise from "@/lib/mongodb";
 
 export async function GET() {
   try {
-    console.log("Starting get-movies request");
+    console.log("Connecting to MongoDB...");
     const client = await clientPromise;
     const db = client.db("rssApp");
 
-    console.log("Connected to MongoDB, fetching from selectedMovies");
+    console.log("Fetching movies...");
     const movies = await db
       .collection("selectedMovies")
       .find({})
@@ -15,18 +16,9 @@ export async function GET() {
       .toArray();
 
     console.log(`Found ${movies.length} movies`);
-
     return NextResponse.json(movies);
   } catch (error) {
-    console.error("Error in get-movies:", error);
-    // Return more detailed error for debugging
-    return NextResponse.json(
-      {
-        error: error.message,
-        stack: process.env.NODE_ENV === "development" ? error.stack : undefined,
-        details: "Error fetching movies",
-      },
-      { status: 500 }
-    );
+    console.error("Error fetching movies:", error);
+    return NextResponse.json([], { status: 200 }); // Return empty array instead of error
   }
 }
