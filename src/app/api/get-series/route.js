@@ -10,7 +10,7 @@ export async function GET() {
 
     console.log("Fetching series...");
     const series = await db
-      .collection("selectedSeries")
+      .collection("series")
       .find({})
       .sort({ addedAt: -1 })
       .toArray();

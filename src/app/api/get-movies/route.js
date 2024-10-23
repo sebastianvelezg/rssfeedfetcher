@@ -10,7 +10,7 @@ export async function GET() {
 
     console.log("Fetching movies...");
     const movies = await db
-      .collection("selectedMovies")
+      .collection("movies")
       .find({})
       .sort({ addedAt: -1 })
       .toArray();
@@ -19,6 +19,6 @@ export async function GET() {
     return NextResponse.json(movies);
   } catch (error) {
     console.error("Error fetching movies:", error);
-    return NextResponse.json([], { status: 200 }); // Return empty array instead of error
+    return NextResponse.json([], { status: 200 });
   }
 }

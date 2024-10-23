@@ -6,25 +6,56 @@ import PaginatedMovieList from "@/components/PaginatedMovieList";
 
 async function getItems() {
   try {
-    const moviesRes = await fetch("/api/get-movies", {
-      cache: "no-store",
+    // Get base URL for server-side requests
+    const protocol = process.env.NODE_ENV === "development" ? "http" : "https";
+    const host = process.env.VERCEL_URL || "localhost:3000";
+    const baseUrl = `${protocol}://${host}`;
+
+    // Log the request details
+    console.log("Making requests to:", {
+      moviesUrl: `${baseUrl}/api/get-movies`,
+      seriesUrl: `${baseUrl}/api/get-series`,
+      environment: process.env.NODE_ENV,
+      vercelUrl: process.env.VERCEL_URL,
     });
-    const seriesRes = await fetch("/api/get-series", {
-      cache: "no-store",
+
+    const [moviesRes, seriesRes] = await Promise.all([
+      fetch(new URL("/api/get-movies", baseUrl).toString(), {
+        cache: "no-store",
+        next: { revalidate: 0 },
+      }),
+      fetch(new URL("/api/get-series", baseUrl).toString(), {
+        cache: "no-store",
+        next: { revalidate: 0 },
+      }),
+    ]);
+
+    console.log("Response status:", {
+      movies: moviesRes.status,
+      series: seriesRes.status,
     });
 
     if (!moviesRes.ok || !seriesRes.ok) {
-      console.error("Movies status:", moviesRes.status);
-      console.error("Series status:", seriesRes.status);
+      console.error("API Response not ok:", {
+        moviesStatus: moviesRes.status,
+        seriesStatus: seriesRes.status,
+      });
       return { movies: [], series: [] };
     }
 
-    const movies = await moviesRes.json();
-    const series = await seriesRes.json();
+    const [movies, series] = await Promise.all([
+      moviesRes.json(),
+      seriesRes.json(),
+    ]);
+
+    console.log("Data fetched:", {
+      moviesCount: movies.length,
+      seriesCount: series.length,
+    });
 
     return { movies, series };
   } catch (error) {
-    console.error("Error fetching items:", error);
+    console.error("Error in getItems:", error);
     return { movies: [], series: [] };
   }
 }
