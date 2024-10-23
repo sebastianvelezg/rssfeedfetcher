@@ -3,59 +3,37 @@ import Link from "next/link";
 import { Settings, AlertTriangle, Activity } from "lucide-react";
 import RefreshButton from "@/components/refreshButton";
 import PaginatedMovieList from "@/components/PaginatedMovieList";
+import clientPromise from "@/lib/mongodb"; // Add this import at the top
+import { serializeMongoDocArray } from "@/utils/mongoSerializer";
 
 async function getItems() {
   try {
-    // Get base URL for server-side requests
-    const protocol = process.env.NODE_ENV === "development" ? "http" : "https";
-    const host = process.env.VERCEL_URL || "localhost:3000";
-    const baseUrl = `${protocol}://${host}`;
+    console.log("Connecting to MongoDB...");
+    const client = await clientPromise;
+    const db = client.db("rssApp");
 
-    // Log the request details
-    console.log("Making requests to:", {
-      moviesUrl: `${baseUrl}/api/get-movies`,
-      seriesUrl: `${baseUrl}/api/get-series`,
-      environment: process.env.NODE_ENV,
-      vercelUrl: process.env.VERCEL_URL,
-    });
+    console.log("Fetching items from MongoDB...");
 
-    const [moviesRes, seriesRes] = await Promise.all([
-      fetch(new URL("/api/get-movies", baseUrl).toString(), {
-        cache: "no-store",
-        next: { revalidate: 0 },
-      }),
-      fetch(new URL("/api/get-series", baseUrl).toString(), {
-        cache: "no-store",
-        next: { revalidate: 0 },
-      }),
+    // Fetch items
+    const [rawMovies, rawSeries] = await Promise.all([
+      db.collection("movies").find({}).sort({ addedAt: -1 }).toArray(),
+      db.collection("series").find({}).sort({ addedAt: -1 }).toArray(),
     ]);
 
-    console.log("Response status:", {
-      movies: moviesRes.status,
-      series: seriesRes.status,
-    });
+    // Serialize the documents
+    const movies = serializeMongoDocArray(rawMovies);
+    const series = serializeMongoDocArray(rawSeries);
 
-    if (!moviesRes.ok || !seriesRes.ok) {
-      console.error("API Response not ok:", {
-        moviesStatus: moviesRes.status,
-        seriesStatus: seriesRes.status,
-      });
-      return { movies: [], series: [] };
-    }
-
-    const [movies, series] = await Promise.all([
-      moviesRes.json(),
-      seriesRes.json(),
-    ]);
-
-    console.log("Data fetched:", {
-      moviesCount: movies.length,
-      seriesCount: series.length,
-    });
+    console.log(`Found ${movies.length} movies and ${series.length} series`);
 
     return { movies, series };
   } catch (error) {
-    console.error("Error in getItems:", error);
+    console.error("Error fetching items:", error);
+    console.error("Error details:", {
+      message: error.message,
+      stack: error.stack,
+      name: error.name,
+    });
     return { movies: [], series: [] };
   }
 }

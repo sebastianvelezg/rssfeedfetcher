@@ -1,6 +1,7 @@
 // src/app/api/get-movies/route.js
 import { NextResponse } from "next/server";
 import clientPromise from "@/lib/mongodb";
+import { serializeMongoDocArray } from "@/lib/utils/mongoSerializer";
 
 export async function GET() {
   try {
@@ -9,12 +10,13 @@ export async function GET() {
     const db = client.db("rssApp");
 
     console.log("Fetching movies...");
-    const movies = await db
+    const rawMovies = await db
       .collection("movies")
       .find({})
       .sort({ addedAt: -1 })
       .toArray();
 
+    const movies = serializeMongoDocArray(rawMovies);
     console.log(`Found ${movies.length} movies`);
     return NextResponse.json(movies);
   } catch (error) {
