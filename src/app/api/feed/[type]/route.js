@@ -2,6 +2,7 @@
 import { NextResponse } from "next/server";
 import clientPromise from "@/lib/mongodb";
 import RSS from "rss";
+import { getBaseUrl } from "@/utils/getBaseUrl";
 
 export async function GET(request, { params }) {
   try {
@@ -22,7 +23,7 @@ export async function GET(request, { params }) {
       ? `${
           request.headers.get("x-forwarded-proto") || "http"
         }://${request.headers.get("host")}`
-      : process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000";
+      : getBaseUrl();
 
     const feed = new RSS({
       title: `My ${type === "movies" ? "Movies" : "Series"} Feed`,

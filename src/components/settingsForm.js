@@ -3,6 +3,7 @@
 
 import { useState, useEffect } from "react";
 import { Rss, Copy, ChevronRight, CheckCircle } from "lucide-react";
+import { getBaseUrl } from "@/utils/getBaseUrl";
 
 export default function SettingsForm() {
   const [url, setUrl] = useState("");
@@ -148,14 +149,12 @@ export default function SettingsForm() {
               <input
                 type="text"
                 readOnly
-                value={`${process.env.NEXT_PUBLIC_API_URL}/api/feed/${feedType}`}
+                value={`${getBaseUrl()}/api/feed/${feedType}`}
                 className="flex-1 px-4 py-2 bg-[#171717] border border-r-0 border-[#444444] rounded-l-lg text-[#EDEDED]"
               />
               <button
                 onClick={() =>
-                  handleCopy(
-                    `${process.env.NEXT_PUBLIC_API_URL}/api/feed/${feedType}`
-                  )
+                  handleCopy(`${getBaseUrl()}/api/feed/${feedType}`)
                 }
                 className="px-4 py-2 bg-[#DA0037] text-white rounded-r-lg hover:bg-[#b8002f] transition-colors"
               >
