@@ -1,101 +1,119 @@
-import Image from "next/image";
+// src/app/page.js
+import Link from "next/link";
+import MovieList from "@/components/movieList";
+import { Settings } from "lucide-react";
+import RefreshButton from "@/components/refreshButton";
+import PaginatedMovieList from "@/components/PaginatedMovieList";
 
-export default function Home() {
+async function getItems() {
+  const protocol = process.env.NODE_ENV === "development" ? "http" : "https";
+  const host = process.env.VERCEL_URL || "localhost:3000";
+  const baseUrl = `${protocol}://${host}`;
+
+  const moviesRes = await fetch(`${baseUrl}/api/get-movies`, {
+    cache: "no-store",
+  });
+  const seriesRes = await fetch(`${baseUrl}/api/get-series`, {
+    cache: "no-store",
+  });
+
+  if (!moviesRes.ok || !seriesRes.ok) {
+    throw new Error("Failed to fetch items");
+  }
+
+  const movies = await moviesRes.json();
+  const series = await seriesRes.json();
+
+  return { movies, series };
+}
+
+export default async function Home() {
+  const { movies, series } = await getItems();
+
   return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-semibold">
-              src/app/page.js
-            </code>
-            .
-          </li>
-          <li>Save and see your changes instantly.</li>
-        </ol>
-
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:min-w-44"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+    <div className="min-h-screen bg-gradient-to-b from-[#171717] to-[#1a1a1a]">
+      <main className="container mx-auto px-4 py-8 max-w-[2000px]">
+        {/* Header Section */}
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-12">
+          <div className="flex items-center gap-3">
+            <div className="relative">
+              <div className="absolute -inset-1 bg-gradient-to-r from-[#DA0037] to-[#b8002f] rounded-lg blur opacity-25"></div>
+              <h1 className="relative text-3xl md:text-4xl font-bold text-[#EDEDED] tracking-tight">
+                Latest Media
+              </h1>
+            </div>
+          </div>
+          <div className="w-100 gap-2 flex">
+            <Link
+              href="/settings"
+              className="flex items-center gap-2 bg-[#DA0037] hover:bg-[#b8002f] text-[#EDEDED] font-semibold py-2.5 px-6 rounded-lg transition-all duration-200 transform hover:scale-105 hover:shadow-lg group"
+            >
+              <Settings className="w-5 h-5 transition-transform group-hover:rotate-45" />
+              <span>Settings</span>
+            </Link>
+            <Link
+              href="/status"
+              className="flex items-center gap-2 bg-[#DA0037] hover:bg-[#b8002f] text-[#EDEDED] font-semibold py-2.5 px-6 rounded-lg transition-all duration-200 transform hover:scale-105 hover:shadow-lg group"
+            >
+              <Settings className="w-5 h-5 transition-transform group-hover:rotate-45" />
+              <span>Status</span>
+            </Link>
+          </div>
         </div>
+
+        {movies.length === 0 && series.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-20 text-center">
+            <div className="bg-[#2a2a2a] rounded-full p-6 mb-4">
+              <Settings className="w-10 h-10 text-[#DA0037]" />
+            </div>
+            <h3 className="text-xl font-semibold text-[#EDEDED] mb-2">
+              No Media Found
+            </h3>
+            <p className="text-[#EDEDED]/60 mb-6 max-w-md">
+              Start by adding some RSS feeds in the settings to populate your
+              media library.
+            </p>
+            <Link
+              href="/settings"
+              className="bg-[#DA0037] hover:bg-[#b8002f] text-[#EDEDED] font-semibold py-2.5 px-6 rounded-lg transition-all duration-200 transform hover:scale-105"
+            >
+              Add RSS Feeds
+            </Link>
+          </div>
+        ) : (
+          <div className="flex flex-col lg:flex-row gap-6">
+            <section className="lg:w-1/2">
+              <div className="flex items-center gap-4 mb-6">
+                <h2 className="text-2xl font-bold text-[#EDEDED]">Series</h2>
+                <RefreshButton type="series" />
+                <div className="h-px flex-grow bg-gradient-to-r from-[#DA0037]/50 to-transparent"></div>
+              </div>
+              <div className="relative">
+                <div className="absolute -inset-1 bg-gradient-to-r from-[#DA0037]/10 to-transparent rounded-xl blur-xl"></div>
+                <div className="relative">
+                  <PaginatedMovieList items={series} />
+                </div>
+              </div>
+            </section>
+
+            <div className="h-px lg:hidden bg-gradient-to-r from-[#DA0037]/50 via-[#DA0037]/25 to-transparent my-6"></div>
+
+            <section className="lg:w-1/2">
+              <div className="flex items-center gap-4 mb-6">
+                <h2 className="text-2xl font-bold text-[#EDEDED]">Movies</h2>
+                <RefreshButton type="movies" />
+                <div className="h-px flex-grow bg-gradient-to-r from-[#DA0037]/50 to-transparent"></div>
+              </div>
+              <div className="relative">
+                <div className="absolute -inset-1 bg-gradient-to-r from-[#DA0037]/10 to-transparent rounded-xl blur-xl"></div>
+                <div className="relative">
+                  <PaginatedMovieList items={movies} />
+                </div>
+              </div>
+            </section>
+          </div>
+        )}
       </main>
-      <footer className="row-start-3 flex gap-6 flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
     </div>
   );
 }
